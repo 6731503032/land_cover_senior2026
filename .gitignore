@@ -1,0 +1,15 @@
+# Big files stay out of GitHub (100 MB limit per file)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+checkpoints/
+*.pth
+*.pt
+*.tif
+*.tiff
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/

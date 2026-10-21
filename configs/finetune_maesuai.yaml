@@ -1,0 +1,11 @@
+# Experiment 2: fine-tune on our own Mae Suai labels
+name: finetune_maesuai
+data_dir: data/processed/maesuai
+crop_size: 256
+batch_size: 8
+epochs: 30
+lr: 0.00005           # smaller than before: we adjust, not relearn
+model: Unet
+encoder: resnet34
+num_classes: 7        # our class list (see src/data/classes.py)
+pretrained_checkpoint: checkpoints/train_oem.pth

@@ -1,0 +1,6 @@
+numpy
+torch
+segmentation-models-pytorch
+pyyaml
+pillow
+pytest
