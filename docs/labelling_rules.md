@@ -24,7 +24,7 @@ At 10 m a pixel covers 10 m x 10 m. A single house or a narrow path is smaller t
 
 The 8 classes, names and colours are the ones from the OpenEarthMap paper (Table 2). The IDs 1 to 8 follow the order of that table. 0 means "not labelled". **[CONFIRM]** the IDs must match `src/data/classes.py`.
 
-The OpenEarthMap paper does **not** give written definitions for its classes. The descriptions below are our own working definitions. **[CONFIRM]** them after the agreement test in section 8.
+The OpenEarthMap paper gives written class definitions in its supplement (Section S1, "Land Cover Classes"). The descriptions below adapt them for 10 m imagery and add our own working rules. **[CONFIRM]** them after the agreement test in section 8.
 
 | ID | Class | Colour | Include | Do not include | How it usually looks at 10 m (check on your chip) |
 |---|---|---|---|---|---|
@@ -42,11 +42,17 @@ The OpenEarthMap paper does **not** give written definitions for its classes. Th
 1. **Minimum size: 900 m²** (3 x 3 pixels). Smaller patches are merged into the surrounding class. Do not draw them as separate polygons.
 2. **Label what you see in that year's image.** Use the other two years only to help you decide (for example, a field looks different each year, forest does not).
 3. **Use the same display settings for every chip and year.** Fixed contrast, maximum `[CONFIRM]` (script setting `STRETCH_MAX`). Use the NIR view for a second look only.
-4. **Draw large areas by hand.** Trace visible boundaries with as few vertices as needed. Do not try to draw detail smaller than a pixel.
+4. **Draw large areas by hand, and keep the outline simple.** Click along the visible edge of an area (for example a forest patch or a lake) to draw its polygon yourself. Use only as many points as you need to follow the edge. Do not add extra points to trace details smaller than one pixel (10 m): the image cannot show them, and they only make the outline messy.
 5. **No overlaps and no gaps** between polygons, except where section 4 says so. Snapping, topological editing and avoid overlap must be on.
 6. **When you are not sure, choose the larger surrounding class**, not a small special case.
 7. **Every polygon gets a class from the dropdown.** Never leave `class_id` empty. An empty class is not drawn on the map, and it breaks the mask.
-8. Fill in the `labeller` field with your name.
+8. **Label Water and Tree first.  They are the easiest classes to identify, so draw them first and get them right. Then label the other classes in the gaps, with snapping on so new polygons share edges with the water and tree polygons. Leave the harder classes (Rangeland, Agriculture land, Bareland, Developed space) for last, because you decide them by comparing with their neighbours.
+   - Draw only the clear areas first (dark water, dense forest). Leave doubtful edges and mixed areas for the later pass.
+   - Mountain shadow can look like water or tree. Use the shadow rule in section 5 and check the other two years.
+9. **Check other sources when the 10 m image is not clear enough. One pixel is 10 m, so houses, roads and field edges are often too small to see. Look at higher-resolution views, such as Google Earth Pro (use its historical imagery slider) and Esri World Imagery (use Wayback for older dates), then decide the class.
+   - Use them only to help you decide. Draw and label on the Sentinel-2 chip.
+   - Match the year as closely as you can. The land can change between that image's date and our 2019, 2022 or 2025 composite.
+   - Do not copy or export those images into the project. Check their terms of use.
 
 ## 4. Roads
 
@@ -74,14 +80,7 @@ The OpenEarthMap paper reports these confusions, so expect them in our chips too
 
 ## 6. QGIS settings
 
-- Project CRS: EPSG:32647.
-- Label files: `labels/labels_<year>.gpkg`, layer `labels`, fields `class_id`, `chip_id`, `year`, `labeller`.
-- Use `qgis_setup_chip.py` to open a chip. Set `CHIP_ID`, `LABELLER` and the data path first.
-- Before you finish a chip:
-  1. Select by expression `area($geometry) < 900` and merge small polygons with **Eliminate selected polygons**.
-  2. Run **Fix geometries**.
-  3. Make the mask with **Rasterize (vector to raster)**: field `class_id`, pixel size 10, extent from the chip, data type Byte. Save it as `masks/<year>/<chip number>.tif`.
-  4. Look at the mask on top of the image. Fix any gaps or broken roads.
+YET TO BE CONFIRMED
 
 ## 7. Review
 
@@ -108,5 +107,5 @@ The OpenEarthMap paper reports these confusions, so expect them in our chips too
 ---
 
 Sources:
-- Class names, colours and annotation process: OpenEarthMap, Xia et al., WACV 2023 (Table 2 and Sections 2.2, 3.2 and 6), https://openaccess.thecvf.com/content/WACV2023/papers/Xia_OpenEarthMap_A_Benchmark_Dataset_for_Global_High-Resolution_Land_Cover_Mapping_WACV_2023_paper.pdf
+- Class names, colours and annotation process: OpenEarthMap, Xia et al., WACV 2023 (Table 2, Sections 2.2, 3.2 and 6, and Supplement S1), https://openaccess.thecvf.com/content/WACV2023/papers/Xia_OpenEarthMap_A_Benchmark_Dataset_for_Global_High-Resolution_Land_Cover_Mapping_WACV_2023_paper.pdf
 - The appearance notes and decision rules are our own working proposals, not from the paper.
