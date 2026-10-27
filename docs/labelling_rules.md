@@ -48,7 +48,7 @@ The OpenEarthMap paper does **not** give written definitions for its classes. Th
 7. **Every polygon gets a class from the dropdown.** Never leave `class_id` empty. An empty class is not drawn on the map, and it breaks the mask.
 8. Fill in the `labeller` field with your name.
 
-## 4. Roads **[CONFIRM]**
+## 4. Roads
 
 A road is often narrower than one pixel, so we use one fixed rule for the whole project:
 
