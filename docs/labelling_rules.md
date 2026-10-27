@@ -53,9 +53,7 @@ The OpenEarthMap paper does **not** give written definitions for its classes. Th
 A road is often narrower than one pixel, so we use one fixed rule for the whole project:
 
 - Only label roads you can follow as a continuous line.
-- Every road is **20 m wide** (2 pixels), even if the real road is narrower.
-- **Option A (proposed):** draw the road as a centre line, buffer it by **10 m** with flat ends, paste the result into the label layer with `class_id` 4. Draw roads **before** the large areas.
-- **Option B:** leave roads as the gaps between polygons and fill them with class 4 when making the mask (Rasterize, "pre-initialize with value" 4). Faster, but any gap you leave by mistake becomes Road, and the width depends on how tightly you draw.
+- **Option B:** leave roads as the gaps between polygons and fill them as the remaining class after labelling all other 7 classes.
 
 Chosen option: ______ (write A or B here).
 
