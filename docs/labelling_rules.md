@@ -43,7 +43,7 @@ The OpenEarthMap paper gives written class definitions in its supplement (Sectio
 2. **Label what you see in that year's image.** Use the other two years only to help you decide (for example, a field looks different each year, forest does not).
 3. **Use the same display settings for every year in QGIS**
 4. **Keep outline simple for large area** Use only as many points as you need to follow the edge. Do not add extra points to trace details smaller than one pixel.
-5. **Check other sources when the 10 m image is not clear enough. One pixel is 10 m, so houses, roads and field edges are often too small to see. Look at higher-resolution views, such as Google Earth Pro (use its historical imagery slider) and Esri World Imagery (use Wayback for older dates), then decide the class.
+5. **Check other sources when the 10 m image is not clear enough** One pixel is 10 m, so houses, roads and field edges are often too small to see. Look at higher-resolution views, such as Google Earth Pro (use its historical imagery slider) and Esri World Imagery (use Wayback for older dates), then decide the class.
 6. **When you are not sure, choose the larger surrounding class**, not a small special case.
 7.  **No overlaps and no gaps** between polygons
 8. **Label Water and Tree first.  They are the easiest classes to identify, so draw them first and get them right. Then label the other classes in the gaps. Leave the harder classes (Rangeland, Agriculture land, Bareland, Developed space) for last, because you decide them by comparing with their neighbours.
@@ -63,10 +63,9 @@ The OpenEarthMap paper reports these confusions, so expect them in our chips too
 |---|---|
 | Road vs Developed space (parking lots and surfaces in rural areas look alike) | A continuous line that connects to other roads is Road. A wide flat area is Developed space |
 | Rangeland vs Agriculture land vs Tree (similar colours) | Regular parcel shape or straight edges: Agriculture land. Dark and rough: Tree. Light, smooth and irregular: Rangeland. Check the other two years |
-| Bareland vs Developed space (a construction site is Developed space in OpenEarthMap, but another dataset calls it Bareland) | Cleared ground with no buildings or paving: Bareland. Ground with a building under construction: Developed space. Decide and write it down |
+| Bareland vs Developed space (a construction site is Developed space in OpenEarthMap, but another dataset calls it Bareland) | Cleared ground with no buildings or paving: Bareland. Ground with a building under construction: Developed space|
 | Bareland vs harvested Agriculture land (our images are from the dry season, so many fields may look bare) | If it has field boundaries or looks like a field in another year: Agriculture land |
-| Orchards and plantations (fruit trees, tea, rubber) | Rows or parcel pattern: Agriculture land. Looks like forest: Tree. **Decide as a team** |
-| Shadow in mountain areas (our area has steep terrain) | Label what the ground is, not the shadow. If you cannot tell, ask the team before using a class |
+| Plantations(agricultural vs Forest (tea, rubber, coffee) | Rows or parcel pattern: Agriculture land. Looks like forest: Tree.|
 
 ## 6. QGIS settings
 
@@ -77,22 +76,12 @@ YET TO BE CONFIRMED
 - The person who labels a chip does not review it. A second person checks every chip. (The OpenEarthMap authors also used one labeller and at least two checkers per image.)
 - Checkers look for: empty classes, gaps, polygons under 900 m², roads that are broken or the wrong width, and classes that do not follow these rules.
 
-## 8. Agreement test (do this before labelling everything)
 
-1. Two people label the same 3 chips alone, using these rules.
-2. Make a mask for each person.
-3. Compare them pixel by pixel. Record the overall agreement and which classes they disagreed on.
-4. Discuss every disagreement and update this file. Repeat with new chips until the team is happy with the agreement. The team decides what "good enough" is: ______ (write the number here).
-
-| Date | Chips | Labellers | Overall agreement | Classes with most disagreement | Rule changes |
-|---|---|---|---|---|---|
-| | | | | | |
-
-## 9. Change log
+## 8. Change log
 
 | Date | Change | By |
 |---|---|---|
-| | v0.1 draft | |
+| | v0.2 draft | |
 
 ---
 
