@@ -35,7 +35,7 @@ The OpenEarthMap paper gives written class definitions in its supplement (Sectio
 | 5 | Tree | `#226126` | Forest, dense tree cover, tree groves | Open grass, field crops | Dark green, rough texture. Bright red in the NIR view |
 | 6 | Water | `#0045FF` | Rivers, streams that are visible as water, ponds, reservoirs (including the Mae Suai dam reservoir) | Wet fields (Agriculture land),| Very dark or black-blue, smooth. Almost no NIR |
 | 7 | Agriculture land | `#4BB549` | Cultivated land: fields with regular parcel shapes, rice paddies, crop fields, fallow fields that still show field boundaries | Natural grass without boundaries (Rangeland) | Regular shapes with straight edges. Colour changes between years and seasons |
-| 8 | Building | `#DE1F07` | A building or a group of buildings that you can clearly see as bright roof pixels covering at least the minimum size (section 3) | Single roof spots smaller than the minimum size, yards | Small bright or reddish blocks inside a village |
+| 8 | Building | `#DE1F07` | A building or a group of buildings that you can clearly see as bright roof pixels | Single roof spots smaller than the minimum size, yards | Small bright or reddish blocks inside a village |
 
 ## 3. Rules for everyone
 
