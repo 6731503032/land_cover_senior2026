@@ -28,12 +28,12 @@ The OpenEarthMap paper gives written class definitions in its supplement (Sectio
 
 | ID | Class | Colour | Include | Do not include | How it usually looks at 10 m (check on your chip) |
 |---|---|---|---|---|---|
-| 1 | Bareland | `#800000` | Exposed soil and rock, dry riverbed or sand, cleared land with no crop or buildings | Fields that are in a regular parcel pattern (see Agriculture land), yards and compounds (Developed space) | Tan or brown, bright, little texture. Dull in the NIR view, not red |
+| 1 | Bareland | `#800000` | Exposed soil and rock, dry riverbed or sand, cleared land with no crop or buildings | Fields that are in a regular parcel pattern (see Agriculture land)| Tan or brown, bright, little texture. Dull in the NIR view, not red |
 | 2 | Rangeland | `#00FF24` | Natural grass, scrub and shrub, open grassy land without a field pattern | Crops, orchards in rows, dense tree cover | Light or yellow-green, smooth. Less red than trees in the NIR view |
 | 3 | Developed space | `#949494` | Built-up ground that is not a road or a building: yards, compounds, parking areas, paved or packed surfaces, village area where houses cannot be told apart | Roads, clearly visible buildings | Grey or pale, mixed with small bright spots, often next to roads |
-| 4 | Road | `#FFFFFF` | Paved and unpaved roads that you can follow as a continuous line | Footpaths, short lanes you cannot follow, yards | A pale thin line crossing other classes, 1 to 2 pixels wide |
+| 4 | Road | `#FFFFFF` | Paved and unpaved roads| Footpaths, short lanes you cannot follow| A pale thin line crossing other classes, 1 to 2 pixels wide |
 | 5 | Tree | `#226126` | Forest, dense tree cover, tree groves | Open grass, field crops | Dark green, rough texture. Bright red in the NIR view |
-| 6 | Water | `#0045FF` | Rivers, streams that are visible as water, ponds, reservoirs (including the Mae Suai dam reservoir) | Wet fields (Agriculture land), shadows | Very dark or black-blue, smooth. Almost no NIR |
+| 6 | Water | `#0045FF` | Rivers, streams that are visible as water, ponds, reservoirs (including the Mae Suai dam reservoir) | Wet fields (Agriculture land),| Very dark or black-blue, smooth. Almost no NIR |
 | 7 | Agriculture land | `#4BB549` | Cultivated land: fields with regular parcel shapes, rice paddies, crop fields, fallow fields that still show field boundaries | Natural grass without boundaries (Rangeland) | Regular shapes with straight edges. Colour changes between years and seasons |
 | 8 | Building | `#DE1F07` | A building or a group of buildings that you can clearly see as bright roof pixels covering at least the minimum size (section 3) | Single roof spots smaller than the minimum size, yards | Small bright or reddish blocks inside a village |
 
