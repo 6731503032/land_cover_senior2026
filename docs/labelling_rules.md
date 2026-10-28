@@ -41,30 +41,19 @@ The OpenEarthMap paper gives written class definitions in its supplement (Sectio
 
 1. **Minimum size: 900 m²** (3 x 3 pixels). Smaller patches are merged into the surrounding class. Do not draw them as separate polygons.
 2. **Label what you see in that year's image.** Use the other two years only to help you decide (for example, a field looks different each year, forest does not).
-3. **Use the same display settings for every chip and year.** Fixed contrast, maximum `[CONFIRM]` (script setting `STRETCH_MAX`). Use the NIR view for a second look only.
-4. **Draw large areas by hand, and keep the outline simple.** Click along the visible edge of an area (for example a forest patch or a lake) to draw its polygon yourself. Use only as many points as you need to follow the edge. Do not add extra points to trace details smaller than one pixel (10 m): the image cannot show them, and they only make the outline messy.
+3. **Use the same display settings for every year in QGIS**
+4. **Keep outline simple for large area** Use only as many points as you need to follow the edge. Do not add extra points to trace details smaller than one pixel.
 5. **Check other sources when the 10 m image is not clear enough. One pixel is 10 m, so houses, roads and field edges are often too small to see. Look at higher-resolution views, such as Google Earth Pro (use its historical imagery slider) and Esri World Imagery (use Wayback for older dates), then decide the class.
-   - Use them only to help you decide. Draw and label on the Sentinel-2 chip.
-   - Match the year as closely as you can. The land can change between that image's date and our 2019, 2022 or 2025 composite.
-   - Do not copy or export those images into the project. Check their terms of use.
 6. **When you are not sure, choose the larger surrounding class**, not a small special case.
-7.  **No overlaps and no gaps** between polygons, except where section 4 says so. Snapping, topological editing and avoid overlap must be on.
-8. **Every polygon gets a class from the dropdown.** Never leave `class_id` empty. An empty class is not drawn on the map, and it breaks the mask.
-9. **Label Water and Tree first.  They are the easiest classes to identify, so draw them first and get them right. Then label the other classes in the gaps, with snapping on so new polygons share edges with the water and tree polygons. Leave the harder classes (Rangeland, Agriculture land, Bareland, Developed space) for last, because you decide them by comparing with their neighbours.
-   - Draw only the clear areas first (dark water, dense forest). Leave doubtful edges and mixed areas for the later pass.
-   - Mountain shadow can look like water or tree. Use the shadow rule in section 5 and check the other two years.
+7.  **No overlaps and no gaps** between polygons
+8. **Label Water and Tree first.  They are the easiest classes to identify, so draw them first and get them right. Then label the other classes in the gaps. Leave the harder classes (Rangeland, Agriculture land, Bareland, Developed space) for last, because you decide them by comparing with their neighbours.
 
 
 ## 4. Roads
 
 A road is often narrower than one pixel, so we use one fixed rule for the whole project:
 
-- Only label roads you can follow as a continuous line.
-- **Option B:** leave roads as the gaps between polygons and fill them as the remaining class after labelling all other 7 classes.
-
-Chosen option: ______ (write A or B here).
-
-Optional idea, not decided: OpenStreetMap road lines can give a first draft of roads. They must be checked against the image.
+Leave roads as the gaps between polygons and fill them as the remaining class after labelling all other 7 classes.
 
 ## 5. Confusing pairs and how we decide **[CONFIRM]**
 
