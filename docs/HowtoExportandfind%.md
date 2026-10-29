@@ -104,29 +104,97 @@ For a smooth picture in a report, use **Project → Import/Export → Export Map
 4. You get a table of value / pixel count / area (m²)
    - % = pixel count ÷ total pixels × 100 (1 chip = 65,536)
 
-### Method 2: Python Console (gives % with class names)
+### Method 2: Excel report for many images + color PNGs (Python Console)
 
-**Plugins → Python Console** → paste the code, edit `path` → Enter
+Creates `class_percent.xlsx` with **one row per image and one column per class**, plus a color PNG of every mask.
+
+| image | file | Unlabeled (%) | Bareland (%) | Rangeland (%) | Developed space (%) | Road (%) | Tree (%) | Water (%) | Agriculture (%) | Building (%) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 51 | mask_2019_51 | 0 | 33.17 | 0 | 0 | 0 | 33.28 | 0 | 33.55 | 0 |
+| 52 | mask_2019_52 | 33.28 | 0 | 0 | 0 | 0 | 0 | 33.55 | 33.17 | 0 |
+
+- `image` = chip number taken from the end of the file name (`mask_2019_51` → 51); `file` = full file name
+- Values are plain numbers 0–100 (each row sums to 100). **Do not apply Excel's % format** to these columns — Excel multiplies by 100 again (23.32 → 2332%)
+- Header is bold and frozen, with filters on every column
+
+How to run:
+
+1. **Plugins → Python Console** → click **Show Editor**
+2. Paste the code below
+3. Edit `INPUT` (a folder of mask .tif files, or one .tif file) and `OUTDIR` (output folder; created if missing)
+4. Click **Run** in the editor → the console prints a summary per image and ends with `done`
+
+Output in `OUTDIR`: `class_percent.xlsx` + one `<file name>.png` per mask.
+The script uses `openpyxl` if available; otherwise it falls back to GDAL's built-in XLSX writer (same data, no bold header/filters).
 
 ```python
-from osgeo import gdal; import numpy as np
-path = r'C:\path\to\mask_2019_51.tif'   # <- change to the real file location
-N = {0:'Unlabeled',1:'Bareland',2:'Rangeland',3:'Developed space',4:'Road',
-     5:'Tree',6:'Water',7:'Agriculture',8:'Building'}
-a = gdal.Open(path).ReadAsArray(); n = np.bincount(a.ravel(), minlength=9)
-for k in range(9):
-    if n[k]: print(f'{k} {N[k]:16s} {100*n[k]/a.size:6.2f}%  ({n[k]*100/1e4:.1f} ha)')
-```
+# QGIS Python Console: class % per mask image -> Excel (.xlsx), plus a color PNG of each image
+# Plugins > Python Console > Show Editor > paste > edit the 2 paths > Run
+import os, glob
+import numpy as np
+from osgeo import gdal
 
-Example output:
+INPUT  = r'C:\path\to\masks'          # a folder of mask .tif files, OR a single .tif file
+OUTDIR = r'C:\path\to\mask_report'    # class_percent.xlsx + PNG pictures are written here
 
-```
-1 Bareland           38.20%  (25.0 ha)
-5 Tree               35.10%  (23.0 ha)
-6 Water               0.40%  (0.3 ha)
-```
+N = {0: 'Unlabeled', 1: 'Bareland', 2: 'Rangeland', 3: 'Developed space', 4: 'Road',
+     5: 'Tree', 6: 'Water', 7: 'Agriculture', 8: 'Building'}
+COL = {0: (0, 0, 0), 1: (128, 0, 0), 2: (0, 255, 36), 3: (148, 148, 148), 4: (255, 255, 255),
+       5: (34, 97, 38), 6: (0, 69, 255), 7: (75, 181, 73), 8: (222, 31, 7)}
+LUT = np.zeros((256, 3), np.uint8)
+for k, c in COL.items(): LUT[k] = c
 
-Works for both a single chip (256 × 256) and the whole area (2560 × 1280).
+files = [INPUT] if INPUT.lower().endswith(('.tif', '.tiff')) else sorted(glob.glob(os.path.join(INPUT, '*.tif')))
+os.makedirs(OUTDIR, exist_ok=True)
+import re
+CLASSES = [k for k in range(9)]
+HEADER = ['image', 'file'] + [f'{N[k]} (%)' for k in CLASSES]
+rows = []
+for p in files:
+    ds = gdal.Open(p)
+    a = ds.ReadAsArray()
+    name = os.path.splitext(os.path.basename(p))[0]
+    m = re.search(r'(\d+)$', name)
+    img = int(m.group(1)) if m else name                     # e.g. mask_2019_51 -> 51
+    n = np.bincount(a.ravel(), minlength=9)[:9]
+    rows.append([img, name] + [round(100 * n[k] / a.size, 2) for k in CLASSES])
+
+    # color picture (PNG) of the same image
+    rgb = LUT[np.clip(a, 0, 255)]
+    mem = gdal.GetDriverByName('MEM').Create('', a.shape[1], a.shape[0], 3, gdal.GDT_Byte)
+    for i in range(3): mem.GetRasterBand(i + 1).WriteArray(rgb[:, :, i])
+    gdal.GetDriverByName('PNG').CreateCopy(os.path.join(OUTDIR, name + '.png'), mem)
+    mem = None; ds = None
+    print(name, ' | '.join(f'{N[k]} {100*n[k]/a.size:.1f}%' for k in CLASSES if n[k]))
+
+xlsx_path = os.path.join(OUTDIR, 'class_percent.xlsx')
+if os.path.exists(xlsx_path): os.remove(xlsx_path)
+try:                                   # nicer file with openpyxl (if installed)
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment
+    wb = Workbook(); ws = wb.active; ws.title = 'class_percent'
+    ws.append(HEADER)
+    for c in ws[1]: c.font = Font(bold=True); c.alignment = Alignment(wrap_text=True)
+    for r in rows: ws.append(r)
+    for row in ws.iter_rows(min_row=2, min_col=3):
+        for c in row: c.number_format = '0.00'                # plain number 0-100, not Excel % format
+    ws.freeze_panes = 'C2'; ws.auto_filter.ref = ws.dimensions
+    ws.column_dimensions['A'].width = 8; ws.column_dimensions['B'].width = 20
+    wb.save(xlsx_path)
+except ImportError:                    # fallback: GDAL's built-in XLSX writer
+    from osgeo import ogr
+    out = ogr.GetDriverByName('XLSX').CreateDataSource(xlsx_path)
+    lyr = out.CreateLayer('class_percent', geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('image', ogr.OFTString)); lyr.CreateField(ogr.FieldDefn('file', ogr.OFTString))
+    for h in HEADER[2:]: lyr.CreateField(ogr.FieldDefn(h, ogr.OFTReal))
+    for r in rows:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        for i, v in enumerate(r): f.SetField(i, str(v) if i < 2 else v)
+        lyr.CreateFeature(f); f = None
+    out = None
+
+print('done ->', OUTDIR, '|', len(files), 'images')
+```
 
 ### Cautions
 
@@ -143,4 +211,5 @@ Works for both a single chip (256 × 256) and the whole area (2560 × 1280).
 | `mask_2019_51.tif` (1 chip, 256 × 256) | Per-chip training |
 | Same file + embedded color table | Still trainable, and opens in color |
 | `*.png` (Rendered image) | Viewing or reports only |
+| `class_percent.xlsx` | Class % per image (Method 2) |
 | `mask_8class_oem_raster.qml` | Color style for opening masks in QGIS |
