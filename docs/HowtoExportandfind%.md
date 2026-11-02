@@ -81,15 +81,6 @@ ds = None
 print('done')
 ```
 
-The numbers inside the file stay 1 to 8. Photos and QGIS now show colours. Some web viewers ignore the colours and still show grey.
-
-**Option B: Make a colour picture for reports** (do not use it for training)
-
-1. Style the layer first: **Properties > Symbology > Paletted/Unique values > Classify**, or load the `mask_8class_oem_raster.qml` style.
-2. Right-click the layer > **Export > Save As...**
-3. Set **Output mode** to **Rendered image**. With "Raw data" the colours are lost.
-4. Set **Format** to PNG and **Resolution** to 10 and 10, then save.
-
 ### Why the edges look like stairs
 
 The mask has the same 256 × 256 pixels as the satellite image, and each pixel can hold only one class. Edges therefore follow the pixel grid. This is correct, because the mask must line up with the image pixel by pixel. For a smooth picture in a report, use **Project > Import/Export > Export Map to Image** from the polygon layer `labels_2019` at 300 dpi.
