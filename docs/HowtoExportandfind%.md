@@ -4,7 +4,6 @@ For **OEM 8-class** labels (values 0–8) on Sentinel-2 imagery at 10 m resoluti
 
 | Value | Class | Color (HEX) |
 |---|---|---|
-| 0 | Unlabeled (not drawn yet / ignored) | 000000 |
 | 1 | Bareland | 800000 |
 | 2 | Rangeland | 00FF24 |
 | 3 | Developed space | 949494 |
