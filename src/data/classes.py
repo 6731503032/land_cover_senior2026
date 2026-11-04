@@ -1,26 +1,6 @@
-"""Class names and the mapping between datasets. Edit here, nowhere else."""
+"""Class names for stage 1 (tree + water only).
+When we move to the full 8 classes, replace this list."""
 
-# Our project classes (placeholder list: change to match your final decision)
-PROJECT_CLASSES = ["Bareland", "Rangeland", "Road", "Tree", "Water", "Agriculture", "Building"]
-
-# OpenEarthMap's 8 classes, in order (verify against the dataset page)
-OEM_CLASSES = ["Bareland", "Rangeland", "Developed space", "Road",
-               "Tree", "Water", "Agriculture", "Building"]
-
-# OEM id -> project id. None = ignore that pixel when training.
-# "Developed space" has no project class yet: decide in docs/decisions.md.
-OEM_TO_PROJECT = {
-    0: 0,     # Bareland -> Bareland
-    1: 1,     # Rangeland -> Rangeland
-    2: None,  # Developed space -> undecided
-    3: 2,     # Road -> Road
-    4: 3,     # Tree -> Tree
-    5: 4,     # Water -> Water
-    6: 5,     # Agriculture -> Agriculture
-    7: 6,     # Building -> Building
-}
-
-# IRSAMap: fill in after reading its class table
-IRSA_TO_PROJECT = {}
-
-IGNORE_INDEX = 255
+CLASS_NAMES = ["other", "tree", "water"]
+CLASS_COLORS = ["#9e9e9e", "#2e7d32", "#1976d2"]   # grey, green, blue
+NUM_CLASSES = len(CLASS_NAMES)

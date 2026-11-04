@@ -1,0 +1,73 @@
+# Stage 1: predict only 3 classes: other (0), tree (1), water (2)
+# Change the numbers here, not in the code.
+# For the 8-class stage: add the names to `classes` and one line per class in mask_ids (see below).
+
+paths:
+  data_root: C:/land_cover_senior2026/data
+  # our GEE chips + masks. Notebook 01 (section 2) pairs
+  #   gee/raw/MaeSuai_2019/51.tif  with  gee/labelled/MaeSuai 2019/water_forest/mask_2019_51.tif
+  # and copies them here with identical names:
+  own_images: gee/raw/MaeSuai_2019
+  own_masks: gee/labelled/MaeSuai 2019/water_forest
+  oem_images: oem/OEM_selected_1500/images
+  oem_masks: oem/OEM_selected_1500/labels
+  weights_dir: C:/land_cover_senior2026/results/weights   # models are saved here
+  results_dir: results          # small outputs (history, plots)
+
+# Class names, in order. Index 0 MUST be the "everything else" class.
+# The number of output classes of the model = len(classes). Change it only here.
+classes: [other, tree, water]
+
+# Which pixel values in the ORIGINAL masks mean each class (one line per class except the first).
+# Everything not listed becomes classes[0] ("other"), except the values in ignore (not used for training or scoring).
+# CHECK THESE with the notebook "check data" cell (it prints the values in a mask).
+mask_ids:
+  own:
+    tree: [5]       # OEM 8-class numbering (labelling rules): 5 = Tree
+    water: [6]      # 6 = Water
+    ignore: [0, 9]  # 0 = Unlabeled (rules), 9 = unlabeled fill in the current exports
+  oem:
+    auto: true      # checks the label files: original OEM (has 8) -> tree 5 / water 6,
+                    # old 7-class remap (no 8) -> tree 4 / water 5. Set false to force the numbers below.
+                    # (auto only knows tree + water: for 8 classes set auto: false and list every class)
+    tree: [5]       # OpenEarthMap: 5 = tree (labels run 1-8)
+    water: [6]      # OpenEarthMap: 6 = water
+    ignore: [0]     # OpenEarthMap: 0 = unknown
+
+# Image max value, used to scale pixels to 0-1.
+# uint8 images = 255. If our GEE export is bigger (e.g. 3000 or 10000), change it.
+image_max:
+  own: 3000        # our GEE chips are uint16 reflectance (0-10000); same fixed stretch as QGIS (0-3000)
+  oem: 255
+
+data:
+  crop_size: 256        # both OEM and our chips are cut/used at 256 (no resizing)
+  val_fraction: 0.2     # 20% of images kept for checking
+  own_repeat: 5         # our few images are repeated so OEM doesn't drown them out
+  num_workers: 2
+
+in_channels: 3          # R, G, B only for now (NIR comes later)
+
+# ---- models: change ONLY `active` to switch ----
+model:
+  active: unet_r34
+
+models:
+  unet_r34:
+    decoder: unet            # unet | unetplusplus | fpn | deeplabv3plus | manet | linknet | pspnet | pan
+    encoder: resnet34
+    encoder_weights: imagenet
+  fpn_r50:
+    decoder: fpn
+    encoder: resnet50
+    encoder_weights: imagenet
+  deeplab_effb3:
+    decoder: deeplabv3plus
+    encoder: efficientnet-b3
+    encoder_weights: imagenet
+
+train:
+  batch_size: 8
+  learning_rate: 0.0001
+  epochs: 30
+  seed: 42
