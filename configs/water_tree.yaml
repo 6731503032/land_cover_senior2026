@@ -9,9 +9,8 @@ paths:
   # and copies them here with identical names:
   own_images: gee/raw/MaeSuai_2019
   own_masks: gee/labelled/MaeSuai 2019/water_forest
-  oem_images: oem/OEM_selected_1500/images
-  oem_masks: oem/OEM_selected_1500/labels
-  weights_dir: C:/land_cover_senior2026/results/weights   # models are saved here
+  oem_root: oem
+  weights_dir: C:/land_cover_senior2026/results/weights   # models are saved here, one file set per model name
   results_dir: results          # small outputs (history, plots)
 
 # Class names, in order. Index 0 MUST be the "everything else" class.
@@ -37,7 +36,7 @@ mask_ids:
 # Image max value, used to scale pixels to 0-1.
 # uint8 images = 255. If our GEE export is bigger (e.g. 3000 or 10000), change it.
 image_max:
-  own: 3000        # our GEE chips are uint16 reflectance (0-10000); same fixed stretch as QGIS (0-3000)
+  own: 3000
   oem: 255
 
 data:
@@ -48,22 +47,30 @@ data:
 
 in_channels: 3          # R, G, B only for now (NIR comes later)
 
-# ---- models: change ONLY `active` to switch ----
+# ---- models ----
+# `active` is only the DEFAULT. The notebook overrides it with MODEL_CHOICE (cell 2),
+# so you normally do not need to edit this line to switch models.
+# Weights and results are saved under the model's name, so each model keeps its own files.
 model:
-  active: unet_r34
+  active: fpn_swin_b
 
+# One block per model: name (2 spaces) -> decoder / encoder / encoder_weights (4 spaces). Use spaces, not tabs.
+# decoder: unet | unetplusplus | fpn | deeplabv3plus | manet | linknet | pspnet | pan
+# (deeplabv3plus and pan do not work with Swin encoders)
 models:
-  unet_r34:
-    decoder: unet            # unet | unetplusplus | fpn | deeplabv3plus | manet | linknet | pspnet | pan
-    encoder: resnet34
+  x:
+    decoder: unet
+    encoder: resnet34              # CNN encoder
     encoder_weights: imagenet
-  fpn_r50:
-    decoder: fpn
-    encoder: resnet50
+
+  fpn_r34:
+    decoder: fpn                   # same decoder as fpn_swin_b -> fair CNN vs transformer comparison
+    encoder: resnet34              # CNN encoder
     encoder_weights: imagenet
-  deeplab_effb3:
-    decoder: deeplabv3plus
-    encoder: efficientnet-b3
+
+  fpn_swin_b:
+    decoder: fpn                   # same decoder as fpn_r34
+    encoder: tu-swinv2_base_window8_256   # Swin V2 Base transformer, made for 256x256 input
     encoder_weights: imagenet
 
 train:
