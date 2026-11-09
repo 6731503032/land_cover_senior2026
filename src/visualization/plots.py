@@ -146,13 +146,11 @@ def to_rgb_image(img, mean=IMAGENET_MEAN, std=IMAGENET_STD):
     if img.ndim == 3 and img.shape[0] in (1, 3, 4) and img.shape[-1] not in (1, 3, 4):
         img = np.transpose(img, (1, 2, 0))          # CHW -> HWC
     img = img[..., :3] if img.shape[-1] >= 3 else np.repeat(img[..., :1], 3, axis=-1)
-    if mean is not None:
+    if mean is not None:                             # undo the dataset's normalisation
         img = img * np.array(std) + np.array(mean)
-        if img.max() > 1.5:                          # already 0-255
-            img = img / 255.0
-    else:                                            # display-only contrast stretch (2-98 percentile)
-        lo, hi = np.percentile(img, (2, 98))
-        img = (img - lo) / (hi - lo) if hi > lo else np.zeros_like(img)
+    if img.max() > 1.5:                              # raw 0-255 data
+        img = img / 255.0
+    # fixed scale, no per-image stretch: pixel/image_max in 0..1, like QGIS's fixed 0..3000 stretch
     return (np.clip(img, 0, 1) * 255).astype(np.uint8)
 
 
@@ -370,8 +368,12 @@ def setup_viewer(cfg, own_shuffled, own_ids, paths, device, test_fraction=0.75,
     classes = cfg["classes"]
     model_name = cfg["model"]["active"]
     spec = cfg["models"][model_name]
-    archs = {"unet": smp.Unet, "fpn": smp.FPN, "deeplabv3plus": smp.DeepLabV3Plus}
-    Arch = archs.get(spec["decoder"], smp.Unet)
+    arch_names = {"unet": "Unet", "unetplusplus": "UnetPlusPlus", "fpn": "FPN",
+                  "deeplabv3plus": "DeepLabV3Plus", "manet": "MAnet", "linknet": "Linknet",
+                  "pspnet": "PSPNet", "pan": "PAN"}
+    if spec["decoder"] not in arch_names:
+        raise ValueError(f"Unknown decoder '{spec['decoder']}'. Known: {sorted(arch_names)}")
+    Arch = getattr(smp, arch_names[spec["decoder"]])
 
     # test set
     _, own_test = split_for(own_shuffled, test_fraction)
@@ -399,7 +401,7 @@ def setup_viewer(cfg, own_shuffled, own_ids, paths, device, test_fraction=0.75,
         models[f"{p}%"] = m.to(device).eval()
     print("models loaded:", list(models))
 
-    kw = dict(mean=None, std=None)
+    kw = dict(mean=IMAGENET_MEAN, std=IMAGENET_STD)   # your tensors are ImageNet-normalised (they go negative)
     kw.update(plot_kwargs)
 
     def show(query="", **extra):
