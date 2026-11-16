@@ -58,7 +58,7 @@ model:
 # decoder: unet | unetplusplus | fpn | deeplabv3plus | manet | linknet | pspnet | pan
 # (deeplabv3plus and pan do not work with Swin encoders)
 models:
-  x:
+  unet_r34:
     decoder: unet
     encoder: resnet34              # CNN encoder
     encoder_weights: imagenet

@@ -28,8 +28,8 @@ def train_one_model(cfg, train_dataset, test_loader, device, weights_path=None):
     batch_size = train_cfg.get("batch_size", 8)
     
     # Early Stopping Controls (Easily adjustable here)
-    TARGET_MIOU = 0.60
-    PATIENCE = 7
+    TARGET_MIOU = 0.8
+    PATIENCE = 10
     # ==========================================
 
     n_classes = len(cfg["classes"])

@@ -1,0 +1,74 @@
+# Stage 2: predict all 8 classes (OpenEarthMap classes)
+# Change the numbers here, not in the code.
+
+paths:
+  data_root: C:/land_cover_senior2026/data
+  own_images: gee/raw/MaeSuai_2019
+  own_masks: gee/labelled/MaeSuai 2019/8_classes   # CHANGE to the folder of your 8-class masks
+  oem_root: oem
+  weights_dir: C:/land_cover_senior2026/results/weights_8class
+  results_dir: results_8class
+
+# Class names, in order. The model outputs 8 classes.
+classes: [bareland, rangeland, developed_space, road, tree, water, agriculture, building]
+
+# Which pixel values in the masks mean each class.
+mask_ids:
+  own:
+    bareland: [1]
+    rangeland: [2]
+    developed_space: [3]
+    road: [4]
+    tree: [5]
+    water: [6]
+    agriculture: [7]
+    building: [8]
+    ignore: []       # no unlabeled pixels, nothing to ignore
+  oem:
+    auto: false      # must be false for 8 classes
+    bareland: [1]
+    rangeland: [2]
+    developed_space: [3]
+    road: [4]
+    tree: [5]
+    water: [6]
+    agriculture: [7]
+    building: [8]
+    ignore: []       # nothing to ignore
+
+image_max:
+  own: 3000
+  oem: 255
+
+data:
+  crop_size: 256
+  val_fraction: 0.2
+  own_repeat: 5
+  num_workers: 2
+
+in_channels: 3
+
+model:
+  active: fpn_swin_b
+
+models:
+  unet_r34:
+    decoder: unet
+    encoder: resnet34
+    encoder_weights: imagenet
+
+  fpn_r34:
+    decoder: fpn
+    encoder: resnet34
+    encoder_weights: imagenet
+
+  fpn_swin_b:
+    decoder: fpn
+    encoder: tu-swinv2_base_window8_256
+    encoder_weights: imagenet
+
+train:
+  batch_size: 8
+  learning_rate: 0.0001
+  epochs: 30
+  seed: 42
