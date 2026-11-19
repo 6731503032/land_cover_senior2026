@@ -18,6 +18,30 @@ def print_table(results, classes):
         print(f"{label:22s} {r['n_test']:9d} {r['miou']:6.3f}  " + "  ".join(f"{v:6.3f}" for v in r["iou"]))
 
 
+def print_table_kfold(all_results, classes):
+    """K-fold version of print_table. `all_results` is what run_kfold returns: {fold: [result per fraction]}.
+    One row per fraction with the mean ± std over folds (mIoU) and the mean IoU of every class."""
+    import pandas as pd
+    folds = [all_results[k] for k in sorted(all_results, key=int)]
+    print(f"{'Mae Suai in training':22s} {'folds':>5s} {'test imgs':>9s} {'mIoU mean ± std':>16s}  "
+          + "  ".join(f"{c:>6s}" for c in classes))
+    rows = []
+    for i in range(len(folds[0])):
+        rs = [f[i] for f in folds]
+        miou = np.array([r["miou"] for r in rs], dtype=float)
+        iou = np.array([r["iou"] for r in rs], dtype=float)          # (folds, classes)
+        n_test = sum(r["n_test"] for r in rs)                        # every image is tested once -> total images
+        label = f"{int(rs[0]['fraction'] * 100):3d}% (~{round(np.mean([r['n_own_train'] for r in rs]))} imgs)"
+        print(f"{label:22s} {len(rs):5d} {n_test:9d} {miou.mean():8.3f} ± {miou.std():5.3f}  "
+              + "  ".join(f"{v:6.3f}" for v in iou.mean(0)))
+        row = {"fraction": rs[0]["fraction"], "folds": len(rs), "n_test_total": n_test,
+               "miou_mean": miou.mean(), "miou_std": miou.std()}
+        row.update({f"iou_{c}": v for c, v in zip(classes, iou.mean(0))})
+        row["miou_per_fold"] = miou.round(4).tolist()
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def plot_miou(results, save_to=None):
     fig, ax = plt.subplots(1, 2, figsize=(10, 3.5))
     ax[0].bar([lab(r) for r in results], [r["miou"] for r in results])
@@ -25,6 +49,23 @@ def plot_miou(results, save_to=None):
     for r in results:
         ax[1].plot(range(1, len(r["curve"]) + 1), r["curve"], label=lab(r))
     ax[1].set_title("Test mIoU per epoch"); ax[1].set_xlabel("epoch"); ax[1].legend()
+    plt.tight_layout()
+    if save_to: plt.savefig(save_to, dpi=120)
+    plt.show()
+
+
+def plot_miou_kfold(all_results, save_to=None):
+    """K-fold version of plot_miou: mean mIoU per fraction with ± std error bars, and each fold as a faint line."""
+    folds = [all_results[k] for k in sorted(all_results, key=int)]
+    x = [int(r["fraction"] * 100) for r in folds[0]]
+    per_fold = np.array([[r["miou"] for r in f] for f in folds])      # (folds, fractions)
+    mean, std = per_fold.mean(0), per_fold.std(0)
+    fig, ax = plt.subplots(figsize=(6.5, 4))
+    for k, row in enumerate(per_fold):
+        ax.plot(x, row, color="grey", alpha=0.35, lw=1, marker=".", label="single fold" if k == 0 else None)
+    ax.errorbar(x, mean, yerr=std, marker="o", capsize=4, lw=2, color="C0", label=f"mean ± std ({len(folds)} folds)")
+    ax.set_xticks(x); ax.set_xlabel("% of training pool used"); ax.set_ylabel("test mIoU")
+    ax.set_ylim(0, 1); ax.set_title("Test mIoU vs share of Mae Suai in training (k-fold)"); ax.legend()
     plt.tight_layout()
     if save_to: plt.savefig(save_to, dpi=120)
     plt.show()
@@ -120,13 +161,16 @@ def make_palette(n_classes, cmap="tab10"):
     return (np.array([cm(i)[:3] for i in range(n_classes)]) * 255).astype(np.uint8)
 
 
-# Label colours (OpenEarthMap labelling scheme: tree = id 5, water = id 6).
-# Edit these if your labelling tool used other colours; "other" is light grey so it
-# stays distinguishable from ignored pixels, which are drawn white.
+# Label colours = the same colours as the QGIS labels / OEM legend (hex in the comments).
 LABEL_COLORS = {
-    "other": (200, 200, 200),
-    "tree":  (34, 97, 38),       # #226126
-    "water": (0, 69, 255),       # #0045FF
+    "bareland":        (128, 0, 0),       # #800000
+    "rangeland":       (0, 255, 36),      # #00FF24
+    "developed_space": (148, 148, 148),   # #949494
+    "road":            (255, 255, 255),   # #FFFFFF
+    "tree":            (34, 97, 38),      # #226126
+    "water":           (0, 69, 255),      # #0045FF
+    "agriculture":     (75, 181, 73),     # #4BB549
+    "building":        (222, 31, 7),      # #DE1F07
 }
 
 
@@ -421,4 +465,76 @@ def setup_viewer(cfg, own_shuffled, own_ids, paths, device, test_fraction=0.75,
 
 # Example:
 # show = setup_viewer(cfg, own_shuffled, OWN_IDS, P, device)
+# show("85.tif")
+
+
+# ---------------------------------------------------------------------------
+# NEW: same as setup_viewer, but for k-fold training (weights live in fold0, fold1, ...)
+# setup_viewer above is left exactly as it was, so your other trainings keep working.
+# ---------------------------------------------------------------------------
+def setup_viewer_fold(cfg, own_shuffled, own_ids, paths, device, fold=0, test_fraction=0.75,
+                      fractions=(0, 25, 50, 75, 100), **plot_kwargs):
+    """Same as setup_viewer, but loads the weights from <weights_dir>/fold{fold}/.
+    Returns a `show` function:  show("85.tif")  |  show(["85.tif", "57.tif"])  |  show("all")"""
+    from torch.utils.data import DataLoader
+    import segmentation_models_pytorch as smp
+    from src.data.pairing import split_for
+    from src.data.seg_dataset import SegDataset
+
+    classes = cfg["classes"]
+    model_name = cfg["model"]["active"]
+    spec = cfg["models"][model_name]
+    arch_names = {"unet": "Unet", "unetplusplus": "UnetPlusPlus", "fpn": "FPN",
+                  "deeplabv3plus": "DeepLabV3Plus", "manet": "MAnet", "linknet": "Linknet",
+                  "pspnet": "PSPNet", "pan": "PAN"}
+    if spec["decoder"] not in arch_names:
+        raise ValueError(f"Unknown decoder '{spec['decoder']}'. Known: {sorted(arch_names)}")
+    Arch = getattr(smp, arch_names[spec["decoder"]])
+
+    # test set
+    _, own_test = split_for(own_shuffled, test_fraction)
+    test_loader = DataLoader(
+        SegDataset(own_test, own_ids, classes, cfg["image_max"]["own"],
+                   cfg["data"]["crop_size"], train=False),
+        batch_size=1, shuffle=False, num_workers=0)
+    names = [Path(a).name for a, _ in own_test]
+    print(f"test images ({len(names)}):")
+    print("  " + "  ".join(f"[{i}] {n}" for i, n in enumerate(names)))
+
+    # models: the only change is the fold folder
+    weights_dir = Path(paths["weights_dir"]) / f"fold{fold}"
+    print("loading weights from:", weights_dir)
+    models = {}
+    for p in fractions:
+        m = Arch(encoder_name=spec["encoder"], encoder_weights=None,
+                 in_channels=cfg["in_channels"], classes=len(classes))
+        ckpt = torch.load(weights_dir / f"{model_name}_fraction_{p}_last.pth", map_location=device)
+        if isinstance(ckpt, dict) and "state_dict" in ckpt:
+            ckpt = ckpt["state_dict"]
+        elif isinstance(ckpt, dict) and "model" in ckpt:
+            ckpt = ckpt["model"]
+        m.load_state_dict(ckpt)
+        models[f"{p}%"] = m.to(device).eval()
+    print("models loaded:", list(models))
+
+    kw = dict(mean=IMAGENET_MEAN, std=IMAGENET_STD)
+    kw.update(plot_kwargs)
+
+    def show(query="", **extra):
+        if query == "all":
+            query = names
+        if isinstance(query, (list, tuple)):
+            for q in query:
+                show(q, **extra)
+            return
+        return plot_prediction_by_filename(models, test_loader, classes, device,
+                                           filename_query=query or names[0], names=names,
+                                           **{**kw, **extra})
+
+    show.names, show.models, show.test_loader = names, models, test_loader
+    return show
+
+
+# Example:
+# show = setup_viewer_fold(cfg, own_pairs, OWN_IDS, P, device, fold=0)
 # show("85.tif")
